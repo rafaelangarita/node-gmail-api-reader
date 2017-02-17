@@ -2,6 +2,10 @@ var fs = require('fs');
 var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
+const scbNodeParser = require('scb-node-parser');
+var mapper = require('./mapper');
+var sender = require('./amqp-sender');
+var Message = require('./lib/message');
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/gmail-nodejs-quickstart.json
@@ -13,18 +17,32 @@ var TOKEN_PATH = TOKEN_DIR + 'gmail-nodejs-quickstart.json';
 //gmail API
 var gmail = google.gmail('v1');
 
-// Load client secrets from a local file.
-fs.readFile('client_secret.json', function processClientSecrets(err, content) {
-    if (err) {
-        console.log('Error loading client secret file: ' + err);
-        return;
-    }
-    // Authorize a client with the loaded credentials, then call the
-    // Gmail API.
-    authorize(JSON.parse(content), function(auth) {
-        listMessages(auth, 'me');
+function checkEmail(callback) {
+
+    // Load client secrets from a local file.
+    fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+        if (err) {
+            console.log('Error loading client secret file: ' + err);
+            return;
+        }
+        // Authorize a client with the loaded credentials, then call the
+        // Gmail API.
+        authorize(JSON.parse(content), function(auth) {
+            listMessages(auth, 'me');
+        });
     });
-});
+
+    callback();
+}
+var milliseconds = 50000;
+
+function sleep() {
+    setTimeout(function() {
+        checkEmail(sleep);
+    }, milliseconds);
+}
+
+checkEmail(sleep);
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -136,15 +154,24 @@ function processMessages(auth, userId, list) {
                 id: message.id
             }, function(err, results) {
                 console.log('Message: ' + results.snippet);
+                var parsedMessage = scbNodeParser.getMessage(results.snippet).getMessage();
+                var subject = '';
+                var source = '';
                 for (header of results.payload.headers) {
                     if (header.name.trim() === 'Subject') {
                         console.log('Subject: ' + header.value);
+                        subject = header.value;
                     }
                     if (header.name.trim() === 'From') {
                         console.log('From: ' + header.value);
+                        source = header.value;
                     }
                 }
-                setToRead(auth, userId, results.id);
+                //setToRead(auth, userId, results.id);
+
+                console.log(mapper.map(subject, parsedMessage));
+                message = new Message(source, scbNodeParser.getMessage(results.snippet).getTo(), mapper.map(subject, parsedMessage));
+                sender.post(message);
             });
         }
     } else {

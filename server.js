@@ -3,9 +3,9 @@ var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 const scbNodeParser = require('scb-node-parser');
+var Message = require('scb-node-parser').Message;
 var mapper = require('./mapper');
 var sender = require('./amqp-sender');
-var Message = require('./lib/message');
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/gmail-nodejs-quickstart.json
@@ -13,6 +13,8 @@ var SCOPES = ['https://www.googleapis.com/auth/gmail.modify'];
 var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
     process.env.USERPROFILE) + '/.credentials/';
 var TOKEN_PATH = TOKEN_DIR + 'gmail-nodejs-quickstart.json';
+
+
 
 //gmail API
 var gmail = google.gmail('v1');
@@ -34,7 +36,7 @@ function checkEmail(callback) {
 
     callback();
 }
-var milliseconds = 50000;
+var milliseconds = 5000;
 
 function sleep() {
     setTimeout(function() {
@@ -42,7 +44,10 @@ function sleep() {
     }, milliseconds);
 }
 
-checkEmail(sleep);
+function start() {
+
+    checkEmail(sleep);
+}
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -154,7 +159,8 @@ function processMessages(auth, userId, list) {
                 id: message.id
             }, function(err, results) {
                 console.log('Message: ' + results.snippet);
-                var parsedMessage = scbNodeParser.getMessage(results.snippet).getMessage();
+                var parsedMessage = scbNodeParser.getMessage(results.snippet);
+                console.log('parsedMessage: ' + parsedMessage.getMessage());
                 var subject = '';
                 var source = '';
                 for (header of results.payload.headers) {
@@ -164,14 +170,17 @@ function processMessages(auth, userId, list) {
                     }
                     if (header.name.trim() === 'From') {
                         console.log('From: ' + header.value);
-                        source = header.value;
+                        source = header.value.toString().match(/\<(.*?)\>/)[1];
+                        console.log('source: ' + source);
                     }
                 }
-                //setToRead(auth, userId, results.id);
+                setToRead(auth, userId, results.id);
 
-                console.log(mapper.map(subject, parsedMessage));
-                message = new Message(source, scbNodeParser.getMessage(results.snippet).getTo(), mapper.map(subject, parsedMessage));
-                sender.post(message);
+                console.log('Map: ' + mapper.map(subject, parsedMessage.getMessage()));
+                parsedMessage.setFrom(source);
+                parsedMessage.setSubject(subject);
+                parsedMessage.setMessage(parsedMessage.getMessage());
+                sender.post(parsedMessage);
             });
         }
     } else {
@@ -197,3 +206,5 @@ function setToRead(auth, userId, messageId) {
         }
     });
 }
+
+exports.start = start;

@@ -10,7 +10,6 @@
 
 var amqp = require('amqplib/callback_api');
 var conf = require('./conf/amqp-sender.conf');
-var Message = require('./lib/message');
 
 /**
  * Sends a message to the Social Communication Platform Bus.

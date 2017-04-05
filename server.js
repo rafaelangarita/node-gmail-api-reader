@@ -6,6 +6,7 @@ const scbNodeParser = require('scb-node-parser');
 var Message = require('scb-node-parser').Message;
 var mapper = require('./mapper');
 var sender = require('./amqp-sender');
+var confamqp = require('./conf/amqp-endpoint.conf');
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/gmail-nodejs-quickstart.json
@@ -163,6 +164,7 @@ function processMessages(auth, userId, list) {
                 console.log('parsedMessage: ' + parsedMessage.getMessage());
                 var subject = '';
                 var source = '';
+                var screenName = '';
                 for (header of results.payload.headers) {
                     if (header.name.trim() === 'Subject') {
                         console.log('Subject: ' + header.value);
@@ -171,15 +173,26 @@ function processMessages(auth, userId, list) {
                     if (header.name.trim() === 'From') {
                         console.log('From: ' + header.value);
                         source = header.value.toString().match(/\<(.*?)\>/)[1];
+                        var data = header.value;
+                        //remove the email and trim and
+                        //line breaks from the start and the end
+                        screenName = data.replace(header.value.toString().match(/\<(.*?)\>/)[0], '')
+                            .trim()
+                            .replace(/^\s+|\s+$/g, '');
+
                         console.log('source: ' + source);
                     }
                 }
                 setToRead(auth, userId, results.id);
 
                 console.log('Map: ' + mapper.map(subject, parsedMessage.getMessage()));
-                parsedMessage.setFrom(source);
+                parsedMessage.setFrom({
+                    name: screenName,
+                    uniqueName: source
+                });
                 parsedMessage.setSubject(subject);
                 parsedMessage.setMessage(parsedMessage.getMessage());
+                parsedMessage._persona = confamqp.exchange.name;
                 sender.post(parsedMessage);
             });
         }

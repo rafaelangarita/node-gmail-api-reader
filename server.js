@@ -159,8 +159,9 @@ function processMessages(auth, userId, list) {
                 userId: userId,
                 id: message.id
             }, function(err, results) {
-                console.log('Message: ' + results.snippet);
-                var parsedMessage = scbNodeParser.getMessage(results.snippet);
+                var body = Buffer.from(results.payload.parts[0].body.data, 'base64');
+                console.log('Message: ' + body);
+                var parsedMessage = scbNodeParser.getMessage(body);
                 console.log('parsedMessage: ' + parsedMessage.getMessage());
                 var subject = '';
                 var source = '';

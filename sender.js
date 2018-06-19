@@ -68,6 +68,7 @@ function makeBody(to, from, subject, message) {
 }
 
 function sendMessage(auth) {
+    console.log('sender.js sending message ' + JSON.stringify(msg));
     const gmail = google.gmail({version: 'v1', auth});
     var raw = makeBody(msg._to.uniqueName, msg.getFrom(), 'From: ' + msg.getFrom().name + '. ' + msg.getSubject(),  msg.getMessage());
     gmail.users.messages.send({

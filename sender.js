@@ -19,11 +19,15 @@ var Message = require('scb-node-parser/message');
  */
 exports.post = function(msg) {
     //msg = JSON.parse(msg);
+    console.log('send email %s ' + JSON.stringify(msg));
+    console.log('to 1 %s ' + msg._to);
+    console.log('to 2 %s ' + msg._to.uniqueName);
     opts = {
         from: msg.getFrom(),
-        to: msg.getTo(),
-        subject: 'From: ' + msg.getFrom() + '. ' + msg.getSubject(),
+        to: msg._to.uniqueName,
+        subject: 'From: ' + msg.getFrom().uniqueName + '. ' + msg.getSubject(),
         body: msg.getMessage()
     }
+    console.log('opts %s ', JSON.stringify(opts));
     mailer.sendMail(opts);
 };

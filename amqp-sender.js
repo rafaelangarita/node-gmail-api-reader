@@ -20,12 +20,13 @@ var conf = require('./conf/amqp-sender.conf');
 exports.post = function(msg) {
     connection = 'amqp://' + conf.user + ':' + conf.password +
         '@' + conf.address + ':' + conf.port;
-    console.log(connection);
+    console.log('connection :' + connection);
     amqp.connect(connection, function(err, conn) {
+        console.log('going to send a message');
         if (err) {
             console.log(err.stack);
         } else {
-
+            
             connect(err, conn, msg, conf.exchange.name);
         }
     });

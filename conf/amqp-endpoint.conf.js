@@ -1,8 +1,8 @@
 module.exports = {
-    address: '104.131.157.72',
+    address: 'mimove-apps.paris.inria.fr',
     port: '5672',
-    user: 'admin',
-    password: 'admin',
+    user: 'appcivist',
+    password: 'appcivist',
     exchange: {
         name: 'email',
         type: 'fanout'

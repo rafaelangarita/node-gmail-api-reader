@@ -1,5 +1,5 @@
 var endpoint = require('./amqp-endpoint');
-var client = require('./server');
+var client = require('./quickstart');
 
 endpoint.listen();
 client.start();

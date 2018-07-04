@@ -208,8 +208,9 @@ function processMessages(auth, userId, list) {
 
                     var Y = "Conversation with";
                     var to = subject.slice(subject.indexOf(Y) + Y.length).trim();
+                    if(to === '')
+                        to = 'rafaelangarita.at.bus@gmail.com';
                     parsedMessage._to = [
-                        //'rafaelangarita.at.bus@gmail.com'
                         to
                     ];
                     parsedMessage.setSubject(subject);
